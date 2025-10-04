@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Claims AI Dashboard – Phy‑3D CAP</title>
+<style>
+  :root{
+    --bg:#0f172a; /* slate-900 */
+    --panel:#111827; /* gray-900 */
+    --panel2:#0b1220; /* darker */
+    --muted:#94a3b8; /* slate-400 */
+    --text:#e5e7eb; /* gray-200 */
+    --accent:#22c55e; /* green-500 */
+    --warn:#f59e0b; /* amber-500 */
+    --danger:#ef4444; /* red-500 */
+    --info:#60a5fa; /* blue-400 */
+    --brand:#7c3aed; /* violet-600 */
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}
+  .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,var(--panel),#0a0f1c);padding:20px;border-right:1px solid #1f2937}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+  .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+  .side-section{margin-top:24px}
+  .side-section h4{color:#9ca3af;margin:12px 0 6px 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .nav-item{padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#cbd5e1}
+  .nav-item:hover{background:#1f2937}
+  .nav-item.active{background:#312e81;color:#e0e7ff}
+  .tag{font-size:11px;padding:2px 6px;border-radius:999px;background:#1f2937;color:#9ca3af}
+
+  .main{padding:20px}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .title{font-size:20px;font-weight:700}
+  .pill{background:#1f2937;color:#e5e7eb;font-size:12px;padding:6px 10px;border-radius:999px}
+
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid #1f2937;border-radius:12px;padding:14px}
+  .card h3{margin:0 0 10px;font-size:15px;color:#c7d2fe}
+  .kv{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:13px;color:#cbd5e1}
+  .kv .k{color:#9ca3af}
+  .btn{background:#312e81;color:#e0e7ff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer}
+  .btn.secondary{background:#1f2937;color:#cbd5e1}
+  .btn.success{background:linear-gradient(90deg,#16a34a,#22c55e)}
+  .btn.warn{background:#f59e0b;color:#111827}
+  .btn.danger{background:#ef4444}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .hr{height:1px;background:#1f2937;margin:10px 0}
+  .img-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .img-ph{height:80px;border-radius:8px;background:repeating-linear-gradient(45deg,#0b1220,#0b1220 10px,#0f172a 10px,#0f172a 20px);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;border:1px dashed #23314f}
+  .table{width:100%;border-collapse:collapse;font-size:13px}
+  .table th,.table td{border-bottom:1px solid #1f2937;padding:8px;text-align:left}
+  .badge{padding:4px 8px;font-size:11px;border-radius:999px;display:inline-block}
+  .ok{background:rgba(34,197,94,.15);color:#22c55e}
+  .warnb{background:rgba(245,158,11,.15);color:#f59e0b}
+  .bad{background:rgba(239,68,68,.15);color:#ef4444}
+  .muted{color:#94a3b8}
+  .progress{height:10px;background:#1f2937;border-radius:999px;overflow:hidden}
+  .progress > div{height:100%;background:linear-gradient(90deg,#06b6d4,#3b82f6);width:0}
+  .right{display:flex;align-items:center;gap:8px}
+  .footer{margin-top:14px;font-size:12px;color:#94a3b8}
+  .switch{position:relative;display:inline-block;width:42px;height:22px}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#1f2937;transition:.2s;border-radius:999px;border:1px solid #334155}
+  .slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:white;transition:.2s;border-radius:50%}
+  input:checked + .slider{background:#22c55e}
+  input:checked + .slider:before{transform:translateX(20px)}
+  .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:none;align-items:center;justify-content:center;padding:20px}
+  .modal .content{background:#0b1220;border:1px solid #1f2937;border-radius:12px;max-width:700px;width:100%;padding:16px}
+
+  @media (max-width:1100px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:sticky;top:0;z-index:10}
+  }
+</style>
+</head>
+<body>
+<div class='app'>
+  <aside class='sidebar'>
+    <div class='logo'><div class='dot'></div><div>Claims AI – Phy‑3D CAP</div></div>
+
+    <div class='side-section'>
+      <h4>Queues</h4>
+      <div class='nav-item active' onclick='showView("active")'>Active Claim <span class='tag'>CLM‑2025‑009876</span></div>
+      <div class='nav-item' onclick='showView("queue")'>All Claims <span class='tag'>42</span></div>
+      <div class='nav-item' onclick='showView("analytics")'>Analytics <span class='tag'>KPIs</span></div>
+    </div>
+
+    <div class='side-section'>
+      <h4>Fast‑lane Threshold</h4>
+      <div class='kv'>
+        <div class='k'>Auto‑approve below</div>
+        <div>₹ <span id='threshVal'>50,000</span></div>
+      </div>
+      <input type='range' min='10000' max='100000' value='50000' step='1000' style='width:100%' oninput='setThreshold(this.value)'>
+      <div class='footer'>Claims under threshold with clean checks are <b>instantly settled</b>.</div>
+    </div>
+
+    <div class='side-section'>
+      <h4>Anomaly Filters</h4>
+      <label class='kv'><span class='k'>Shadow mismatch</span>
+        <label class='switch'><input type='checkbox' checked onchange='toggleFilter("shadow")'><span class='slider'></span></label>
+      </label>
+      <label class='kv'><span class='k'>EXIF vs GPS mismatch</span>
+        <label class='switch'><input type='checkbox' checked onchange='toggleFilter("exif")'><span class='slider'></span></label>
+      </label>
+      <label class='kv'><span class='k'>Duplicate image</span>
+        <label class='switch'><input type='checkbox' checked onchange='toggleFilter("dup")'><span class='slider'></span></label>
+      </label>
+      <label class='kv'><span class='k'>Stock photo similarity</span>
+        <label class='switch'><input type='checkbox' checked onchange='toggleFilter("stock")'><span class='slider'></span></label>
+      </label>
+    </div>
+  </aside>
+
+  <main class='main'>
+    <div class='header'>
+      <div>
+        <div class='title'>Active Claim • <span id='claimId'>CLM‑2025‑009876</span></div>
+        <div class='muted'>Minor collision • Front‑left bumper/fender • Reported 10:12 • Sub‑threshold candidate</div>
+      </div>
+      <div class='row'>
+        <button class='btn secondary' onclick='exportPack()'>Export Explainability Pack</button>
+        <button class='btn' onclick='recomputeAll()'>Recompute Estimate</button>
+      </div>
+    </div>
+
+    <section id='view-active' class='grid'>
+      <!-- Summary & Decision -->
+      <div class='card' style='grid-column: span 4;'>
+        <h3>Claim Summary</h3>
+        <div class='kv'><div class='k'>Claimant</div><div>Shreya N • +91‑98xxxxx210</div></div>
+        <div class='kv'><div class='k'>Vehicle</div><div>Maruti Baleno 2022 • MH01AB1234</div></div>
+        <div class='kv'><div class='k'>Estimate (AI)</div><div>₹ <span id='estTotal'>46,200</span></div></div>
+        <div class='kv'><div class='k'>Decision Route</div><div><span id='route' class='badge ok'>Auto‑approve candidate</span></div></div>
+        <div class='kv'><div class='k'>Fraud Risk</div><div><span id='fraudRisk' class='badge ok'>Low (0.18)</span></div></div>
+        <div class='kv'><div class='k'>C2PA Provenance</div><div><span id='c2pa' class='badge ok'>Pass</span></div></div>
+        <div class='hr'></div>
+        <div class='row'>
+          <button class='btn success' onclick='approveCashout()'>Approve Cash‑out (UPI)</button>
+          <button class='btn' onclick='openMarketplace()'>Book Repair</button>
+          <button class='btn warn' onclick='requestHuman()'>Request Human Review</button>
+        </div>
+        <div class='footer'>Actions are logged to the audit trail with inputs and rationale.</div>
+      </div>
+
+      <!-- Augmented Damage Mapping -->
+      <div class='card' style='grid-column: span 5;'>
+        <h3>Augmented Damage Mapping</h3>
+        <div class='img-grid'>
+          <div class='img-ph'>Front‑left (overlay)</div>
+          <div class='img-ph'>Front‑right</div>
+          <div class='img-ph'>Left side</div>
+          <div class='img-ph'>Rear</div>
+          <div class='img-ph'>Close‑up dent</div>
+          <div class='img-ph'>Headlamp</div>
+          <div class='img-ph'>Hood gap</div>
+          <div class='img-ph'>License plate</div>
+        </div>
+        <div class='row' style='margin-top:10px'>
+          <button class='btn secondary' onclick='openReplay()'>AR Capture Replay</button>
+          <button class='btn secondary' onclick='openMesh()'>3D Mesh Preview (NeRF‑lite)</button>
+          <span class='muted'>All images sealed with C2PA • Liveness verified</span>
+        </div>
+      </div>
+
+      <!-- Physics Validation -->
+      <div class='card' style='grid-column: span 3;'>
+        <h3>Physics Validation</h3>
+        <div class='kv'><div class='k'>Impact Vector</div><div>Front‑left</div></div>
+        <div class='kv'><div class='k'>ΔV Estimate</div><div>9.2 km/h</div></div>
+        <div class='kv'><div class='k'>Plausibility</div><div><span class='badge ok'>Pass</span></div></div>
+        <div class='kv'><div class='k'>Narrative Consistency</div><div><span id='narr' class='badge ok'>0.86</span></div></div>
+        <div class='hr'></div>
+        <button class='btn secondary' onclick='runPhysics()'>Run Physics Check</button>
+        <div class='footer'>OBD/phone sensor spike aligned with geometry within tolerance.</div>
+      </div>
+
+      <!-- Parts & Costing -->
+      <div class='card' style='grid-column: span 7;'>
+        <h3>Parts Segmentation & Costing</h3>
+        <table class='table' id='partsTable'>
+          <thead>
+            <tr><th>Part</th><th>Action</th><th>Confidence</th><th>Parts (₹)</th><th>Labor hrs</th><th>Paint hrs</th><th>Total (₹)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Front bumper</td><td>Replace</td><td>0.88</td><td>28,500</td><td>3.0</td><td>1.0</td><td>34,500</td></tr>
+            <tr><td>Left fender</td><td>Repair</td><td>0.73</td><td>2,800</td><td>2.5</td><td>0.6</td><td>7,600</td></tr>
+            <tr><td>Headlamp (LH)</td><td>Replace</td><td>0.81</td><td>3,200</td><td>0.5</td><td>0.0</td><td>4,200</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><th colspan='6' style='text-align:right'>Total</th><th id='partsTotal'>46,300</th></tr>
+          </tfoot>
+        </table>
+        <div class='row' style='margin-top:8px'>
+          <button class='btn secondary' onclick='reprice()'>Refresh Prices</button>
+          <span class='muted'>Live OEM/aftermarket feeds • Local labor bands applied</span>
+        </div>
+      </div>
+
+      <!-- Anomalies & Provenance -->
+      <div class='card' style='grid-column: span 5;'>
+        <h3>Anomalies & LLM Guardrails</h3>
+        <table class='table' id='anomTable'>
+          <thead><tr><th>Check</th><th>Status</th><th>Details</th><th>Resolve</th></tr></thead>
+          <tbody>
+            <tr><td>Shadow consistency</td><td><span class='badge ok'>OK</span></td><td>Sun azimuth matches capture time</td><td><button class='btn secondary' onclick='markResolved(this)'>Mark</button></td></tr>
+            <tr><td>EXIF vs GPS</td><td><span class='badge ok'>OK</span></td><td>Within 110 m radius</td><td><button class='btn secondary' onclick='markResolved(this)'>Mark</button></td></tr>
+            <tr><td>Duplicate frame</td><td><span class='badge warnb'>Review</span></td><td>Angle #3 similar to #4 (0.94)</td><td><button class='btn secondary' onclick='markResolved(this)'>Resolve</button></td></tr>
+            <tr><td>Stock image similarity</td><td><span class='badge ok'>OK</span></td><td>No high-similarity hits</td><td><button class='btn secondary' onclick='markResolved(this)'>Mark</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Repair Marketplace -->
+      <div class='card' style='grid-column: span 7;'>
+        <h3>Repair Marketplace</h3>
+        <div class='kv'><div class='k'>Preferred option</div><div>
+          <select id='shop' style='background:#0b1220;color:#e5e7eb;border:1px solid #1f2937;border-radius:8px;padding:8px'>
+            <option value='A|46200|Wednesday 2 PM'>AutoCare A • ₹46,200 • Wed 2 PM</option>
+            <option value='B|45250|Thursday 10 AM'>FixIt B • ₹45,250 • Thu 10 AM</option>
+            <option value='C|47100|Tomorrow 9 AM'>PrimeShop C • ₹47,100 • Tomorrow 9 AM</option>
+          </select>
+        </div></div>
+        <div class='row' style='margin-top:8px'>
+          <button class='btn' onclick='bookRepair()'>Book Selected Slot</button>
+          <span class='muted'>Live SLA + courtesy car availability shown per shop</span>
+        </div>
+      </div>
+
+      <!-- Audit -->
+      <div class='card' style='grid-column: span 12;'>
+        <h3>Audit Trail</h3>
+        <div id='audit' class='muted'>10:12 Captures uploaded • 10:13 C2PA validated • 10:14 Parts & estimate computed • 10:15 Physics check passed • 10:16 Routed to auto‑approve</div>
+      </div>
+    </section>
+
+    <section id='view-queue' class='grid' style='display:none'>
+      <div class='card' style='grid-column: span 12;'>
+        <h3>Claims Queue</h3>
+        <table class='table'>
+          <thead><tr><th>ID</th><th>Type</th><th>Est (₹)</th><th>Risk</th><th>Route</th><th>Age</th></tr></thead>
+          <tbody id='queueBody'>
+            <tr onclick='openClaim("CLM‑2025‑009876")'><td>CLM‑2025‑009876</td><td>Minor front</td><td>46,200</td><td><span class='badge ok'>Low</span></td><td>Auto‑approve</td><td>12m</td></tr>
+            <tr onclick='openClaim("CLM‑2025‑009877")'><td>CLM‑2025‑009877</td><td>Glass crack</td><td>7,800</td><td><span class='badge ok'>Low</span></td><td>Auto‑approve</td><td>5m</td></tr>
+            <tr onclick='openClaim("CLM‑2025‑009878")'><td>CLM‑2025‑009878</td><td>Rear dent</td><td>88,900</td><td><span class='badge warnb'>Med</span></td><td>Human review</td><td>32m</td></tr>
+            <tr onclick='openClaim("CLM‑2025‑009879")'><td>CLM‑2025‑009879</td><td>Severe side</td><td>2,41,000</td><td><span class='badge bad'>High</span></td><td>SIU</td><td>1h</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id='view-analytics' class='grid' style='display:none'>
+      <div class='card' style='grid-column: span 4;'>
+        <h3>Auto‑Settlement Rate</h3>
+        <div class='progress'><div id='asr' style='width:76%'></div></div>
+        <div class='footer'>Target ≥ 70% for minor claims • Current 76%</div>
+      </div>
+      <div class='card' style='grid-column: span 4;'>
+        <h3>Avg Cycle Time (minor)</h3>
+        <div class='progress'><div id='ct' style='width:82%'></div></div>
+        <div class='footer'>Target &lt; 30 min • Current 27 min</div>
+      </div>
+      <div class='card' style='grid-column: span 4;'>
+        <h3>Fraud Leakage Reduction</h3>
+        <div class='progress'><div id='fr' style='width:64%'></div></div>
+        <div class='footer'>Target 10–20% • Current 13%</div>
+      </div>
+      <div class='card' style='grid-column: span 12;'>
+        <h3>Top Anomaly Signals</h3>
+        <div class='img-grid'>
+          <div class='img-ph'>Shadow mismatch ↑</div>
+          <div class='img-ph'>Duplicate frames</div>
+          <div class='img-ph'>EXIF/GPS drift</div>
+          <div class='img-ph'>Repair ring graph hits</div>
+        </div>
+        <div class='footer'>Use filters on the left to focus the queue on key anomaly types.</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal -->
+<div class='modal' id='modal'>
+  <div class='content'>
+    <div style='display:flex;justify-content:space-between;align-items:center;'>
+      <h3 id='modalTitle'>Preview</h3>
+      <button class='btn danger' onclick='closeModal()'>Close</button>
+    </div>
+    <div class='hr'></div>
+    <div id='modalBody' class='muted'>Content</div>
+  </div>
+</div>
+
+<script>
+  let threshold = 50000;
+  function setThreshold(v){
+    threshold = parseInt(v); document.getElementById('threshVal').innerText = v.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    // Re-evaluate routing
+    const est = 46200;
+    const clean = true; // assume anomaly checks green enough
+    const routeEl = document.getElementById('route');
+    if(clean && est <= threshold){ routeEl.textContent = 'Auto‑approve candidate'; routeEl.className='badge ok'; }
+    else{ routeEl.textContent = 'Human review'; routeEl.className='badge warnb'; }
+  }
+  function toggleFilter(key){
+    // Demo: filter keys just log
+    logAudit('Filter toggled: ' + key);
+  }
+  function exportPack(){
+    alert('Explainability pack generated (JSON + PDF) with inputs, prices, physics, and provenance.');
+    logAudit('Explainability pack exported');
+  }
+  function recomputeAll(){
+    // Demo recompute tweak +/-
+    const delta = (Math.random()*2000-1000)|0;
+    const newTotal = Math.max(32000, 46200 + delta);
+    document.getElementById('estTotal').innerText = newTotal.toLocaleString('en-IN');
+    document.getElementById('partsTotal').innerText = newTotal.toLocaleString('en-IN');
+    setThreshold(threshold);
+    logAudit('Recomputed estimate → ₹ ' + newTotal.toLocaleString('en-IN'));
+  }
+  function approveCashout(){
+    const est = document.getElementById('estTotal').innerText;
+    alert('Approved & paid via UPI: ₹ ' + est + '\nC2PA evidence and rationale stored.');
+    document.getElementById('route').textContent='Paid (auto)';
+    document.getElementById('route').className='badge ok';
+    logAudit('Auto‑approved & paid via UPI');
+  }
+  function openMarketplace(){
+    document.querySelector(".nav-item[onclick*='analytics']");
+    openModal('Repair Marketplace', 'Choose a shop and slot, then click "Book Selected Slot".');
+  }
+  function requestHuman(){
+    alert('Escalated to human adjuster with SLA 2h.');
+    document.getElementById('route').textContent='Escalated';
+    document.getElementById('route').className='badge warnb';
+    logAudit('Escalated to human review');
+  }
+  function bookRepair(){
+    const sel = document.getElementById('shop').value.split('|');
+    alert('Repair booked at '+sel[0]+' • ₹'+Number(sel[1]).toLocaleString('en-IN')+' • '+sel[2]);
+    logAudit('Repair booked: '+sel.join(' / '));
+  }
+  function openReplay(){ openModal('AR Capture Replay', 'Timeline of the 8–12 guided photos with angle verification & liveness checks.'); }
+  function openMesh(){ openModal('3D Mesh Preview (NeRF‑lite)', 'Interactive 3D preview placeholder. Mesh + damage heatmap stored with provenance.'); }
+  function runPhysics(){
+    const score = (0.8 + Math.random()*0.15).toFixed(2);
+    document.getElementById('narr').textContent = score;
+    document.getElementById('narr').className = (score>0.8?'badge ok':'badge warnb');
+    logAudit('Physics & narrative check re-run: '+score);
+  }
+  function markResolved(btn){ btn.closest('tr').querySelector('td:nth-child(2) .badge').outerHTML = "<span class='badge ok'>OK</span>"; logAudit('Anomaly marked resolved'); }
+  function logAudit(entry){
+    const now = new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const t = pad(now.getHours())+':'+pad(now.getMinutes());
+    document.getElementById('audit').innerText += ' • '+t+' '+entry;
+  }
+  function openModal(title, body){
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalBody').innerText = body;
+    document.getElementById('modal').style.display='flex';
+  }
+  function closeModal(){ document.getElementById('modal').style.display='none'; }
+  function showView(id){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const map={active:0,queue:1,analytics:2};
+    document.querySelectorAll('.side-section .nav-item')[map[id]].classList.add('active');
+    document.getElementById('view-active').style.display = (id==='active')?'grid':'none';
+    document.getElementById('view-queue').style.display = (id==='queue')?'grid':'none';
+    document.getElementById('view-analytics').style.display = (id==='analytics')?'grid':'none';
+  }
+  function openClaim(id){ showView('active'); document.getElementById('claimId').innerText=id; logAudit('Opened claim '+id); }
+</script>
+</body>
+</html>
